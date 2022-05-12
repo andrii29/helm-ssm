@@ -3,6 +3,10 @@ A low-dependency tool used to retrieves and injects secrets from AWS SSM Paramet
 
 [![asciicast](https://asciinema.org/a/247712.svg)](https://asciinema.org/a/247712)
 
+## New usage
+```bash
+./ssm.sh template -f values.yml
+```
 
 ## Installation
 ```bash
