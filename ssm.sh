@@ -57,7 +57,7 @@ EOF
 # Handle dependencies
 # AWS cli
 if ! [[ -x "$(command -v aws)" ]]; then
-    echo -e "${RED}[ERROR] aws cli is not installed." >&2
+    echo -e "${RED}[ERROR] aws cli is not installed." 1>&2
     exit 1
 fi
 
@@ -77,7 +77,7 @@ if [[ $# -eq 1 || ( "$cmd" != "install" && "$cmd" != "upgrade" && "$cmd" != "tem
     EXIT_CODE=$?
 
     if [[ ${EXIT_CODE} -ne 0 ]]; then
-        echo -e "${RED}[SSM]${NOC} Helm exited with a non 0 code - this is most likely not a problem with the SSM plugin, but a problem with Helm itself." >&2
+        echo -e "${RED}[SSM]${NOC} Helm exited with a non 0 code - this is most likely not a problem with the SSM plugin, but a problem with Helm itself." 1>&2
     fi
 
     exit ${EXIT_CODE} # exit with the same error code as the command
@@ -109,16 +109,16 @@ do
     shift
 done
 
-echo -e "${GREEN}[SSM]${NOC} Options: ${OPTIONS[@]}"
-echo -e "${GREEN}[SSM]${NOC} Value files: ${VALUE_FILES[@]}"
+echo -e "${GREEN}[SSM]${NOC} Options: ${OPTIONS[@]}" 1>&2
+echo -e "${GREEN}[SSM]${NOC} Value files: ${VALUE_FILES[@]}" 1>&2
 
 set +e # we disable fail-dast because we want to give the user a proper error message in case we cant read the value file
 MERGED_TEXT=""
 for FILEPATH in "${VALUE_FILES[@]}"; do
-    echo -e "${GREEN}[SSM]${NOC} Reading ${FILEPATH}"
+    echo -e "${GREEN}[SSM]${NOC} Reading ${FILEPATH}" 1>&2
 
     if [[ ! -f ${FILEPATH} ]]; then
-        echo -e "${RED}[SSM]${NOC} Error: open ${FILEPATH}: no such file or directory" >&2
+        echo -e "${RED}[SSM]${NOC} Error: open ${FILEPATH}: no such file or directory" 1>&2
         exit 1
     fi
 
@@ -126,7 +126,7 @@ for FILEPATH in "${VALUE_FILES[@]}"; do
     EXIT_CODE=$?
 
     if [[ ${EXIT_CODE} -ne 0 ]]; then
-        echo -e "${RED}[SSM]${NOC} Error: open ${FILEPATH}: failed to read contents" >&2
+        echo -e "${RED}[SSM]${NOC} Error: open ${FILEPATH}: failed to read contents" 1>&2
         exit 1
     fi
 
@@ -137,12 +137,12 @@ done
 PARAMETERS=$(echo -e "${MERGED_TEXT}" | grep -Eo "\{\{ssm [^\}]+\}\}") # Look for {{ssm /path/to/param us-east-1}} patterns, delete empty lines
 PARAMETERS_LENGTH=$(echo "${PARAMETERS}" | grep -v '^$' | wc -l | xargs)
 if [ "${PARAMETERS_LENGTH}" != 0 ]; then
-    echo -e "${GREEN}[SSM]${NOC} Found $(echo "${PARAMETERS}" | grep -v '^$' | wc -l | xargs) parameters"
-    echo -e "${GREEN}[SSM]${NOC} Parameters: \n${PARAMETERS[@]}"
+    echo -e "${GREEN}[SSM]${NOC} Found $(echo "${PARAMETERS}" | grep -v '^$' | wc -l | xargs) parameters" 1>&2
+    echo -e "${GREEN}[SSM]${NOC} Parameters: \n${PARAMETERS[@]}" 1>&2
 else
-    echo -e "${GREEN}[SSM]${NOC} No parameters were found, continuing..."
+    echo -e "${GREEN}[SSM]${NOC} No parameters were found, continuing..." 1>&2
 fi
-echo -e "==============================================="
+echo -e "===============================================" 1>&2
 
 
 set +e
@@ -155,13 +155,13 @@ while read -r PARAM_STRING; do
     REGION=$(echo ${CLEANED_PARAM_STRING:2} | cut -d' ' -f 3) # {{ssm /param/path *us-east-1*}}
     PROFILE=$(echo ${CLEANED_PARAM_STRING:2} | cut -d' ' -f 4) # {{ssm /param/path us-east-1 *production*}}
     if [[ -n ${PROFILE}  ]]; then
-       PROFILE_PARAM="--profile ${PROFILE}"  
+       PROFILE_PARAM="--profile ${PROFILE}"
     fi
     PARAM_OUTPUT="$(aws ssm get-parameter --with-decryption --name ${PARAM_PATH} --output text --query Parameter.Value --region ${REGION} $PROFILE_PARAM  2>&1)" # Get the parameter value or error message
     EXIT_CODE=$?
 
     if [[ ${EXIT_CODE} -ne 0 ]]; then
-        echo -e "${RED}[SSM]${NOC} Error: Could not get parameter: ${PARAM_PATH}. AWS cli output: ${PARAM_OUTPUT}" >&2
+        echo -e "${RED}[SSM]${NOC} Error: Could not get parameter: ${PARAM_PATH}. AWS cli output: ${PARAM_OUTPUT}" 1>&2
         exit 1
     fi
 
@@ -174,6 +174,6 @@ set +e
 echo -e "${MERGED_TEXT}"
 EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo -e "${RED}[SSM]${NOC} Helm exited with a non 0 code - this is most likely not a problem with the SSM plugin, but a problem with Helm itself." >&2
+    echo -e "${RED}[SSM]${NOC} Helm exited with a non 0 code - this is most likely not a problem with the SSM plugin, but a problem with Helm itself." 1>&2
     exit ${EXIT_CODE}
 fi
